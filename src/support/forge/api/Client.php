@@ -119,9 +119,9 @@ class Client
                     $description['baseUri'] = $this->options['client']['base_uri'];
                 }
 
-                $this->description = new Description($description, $options);
-
             } catch (\Exception $ex) {
+            } finally {
+                $this->description = new Description($description, $options) ?: [];
             }
 
         }

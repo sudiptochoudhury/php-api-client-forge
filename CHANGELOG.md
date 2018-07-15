@@ -14,3 +14,7 @@
 - Documentation generator [under-development]
 
      
+### 0.0.3
+- Markdown Documentation generator
+- PhpDoc @method declarations for API magic methods
+  

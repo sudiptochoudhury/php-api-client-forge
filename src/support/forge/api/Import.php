@@ -87,7 +87,7 @@ class Import
                     $operations[$apiName] = $operation;
 
                     $methods[$apiName] = $this->generateMethod($apiName, $operation, $api);
-                    $docs[$apiGroupName]['items'][$apiName] = $this->generateDocs($api, $methods[$apiName]);
+                    $docs[$apiGroupName]['items'][$apiName] = $this->generateDocs($operation, $api, $methods[$apiName]);
 
                 }
             }
@@ -104,7 +104,7 @@ class Import
                 ];
             }
 
-            $this->docsData = ['title' => $globalInfoName, 'groups' => [$docs]];
+            $this->docsData = ['title' => $globalInfoName, 'groups' => $docs];
             $this->methodData = $methods;
         }
 
@@ -207,7 +207,7 @@ class Import
 
     }
 
-    protected function generateDocs($api = [], $method) {
+    protected function generateDocs($operation, $api = [], $method = '') {
 
 //        $baseUri  = $this->clientOptions['base_url'] ?: '';
 
@@ -221,16 +221,24 @@ class Import
         /** @var $description */
 //        extract($request);
 
-        return ['method' => $method,  'details' => $api];
+        return compact('operation', 'api', 'method');
 
     }
+
+    /**
+     * @param       $apiName
+     * @param array $operation
+     * @param array $api
+     *
+     * @return string
+     */
     protected function generateMethod($apiName, $operation = [], $api = []) {
 
-        $method = ['array'];
+        $method = [' * @method static array'];
 
         $data = "";
         $request = $api['request'];
-        $description = $request['description'];
+        $description =  preg_replace('/[\r\n]/', '', $request['description']);
         $params = $operation['parameters'];
         if (!empty($params)) {
             $data = 'array $parameters';
@@ -282,7 +290,7 @@ class Import
         }
         $json = \GuzzleHttp\json_encode($this->data, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
 
-        $options['skipDocs'] = true;
+//        $options['skipDocs'] = true;
         if (empty($options['skipDocs'])) {
             $this->writeMDDocs($options['docsPath'] ?? $path . '.md');
             $this->writeMethods($options['methodsPath'] ?? $path . '.php');
@@ -304,8 +312,37 @@ class Import
             rename($path, $path . '.bak');
         }
 
-        $json = \GuzzleHttp\json_encode($this->docsData, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
-        return file_put_contents($path, $json);
+        $data = $this->docsData;
+
+        $md = ['##' . $data['title']];
+        $md[] = "";
+        $md[] = "### Available API Methods";
+        $md[] = "";
+        $md[] = "| Method             | [method]Endpoint     | Description    | Parameters |";
+        $md[] = "|--------------------|----------------------|----------------|------------|";
+
+        $groups = $data['groups'];
+        foreach($groups as $groupName => $group) {
+            $items = $group['items'];
+            foreach ($items as $apiName => $item) {
+                /** @var $api */
+                /** @var $operation */
+                /** @var $method */
+                extract($item);
+                $row = [];
+                $row[] = $apiName . "(" . (empty($operation['parameters']) ? '' : 'Array') . ")";
+                $row[] = " \[{$operation['httpMethod']}\] {$operation['uri']} ";
+                $row[] = preg_replace('/[\r\n]/', '', $api['request']['description']);
+                $row[] = implode("<br/>", array_keys($operation['parameters']));
+                $row[] = '';
+
+                $md[] = trim(implode(' | ', $row), ' ');
+            }
+        }
+
+        $mdText = implode("\n", $md);
+
+        return file_put_contents($path, $mdText);
     }
 
     protected function writeMethods($path = '') {
@@ -320,8 +357,10 @@ class Import
             rename($path, $path . '.bak');
         }
 
-        $json = \GuzzleHttp\json_encode($this->methodData, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
-        return file_put_contents($path, $json);
+        $methods = $this->methodData ?: [];
+        $methodText = implode("\n", $methods);
+
+        return file_put_contents($path, $methodText);
     }
 
     private function getChildDir() {
