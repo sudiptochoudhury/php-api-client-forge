@@ -292,9 +292,7 @@ class Import
 
 //        $options['skipDocs'] = true;
         if (empty($options['skipDocs'])) {
-            var_dump([$path]);
             $pathWihtouExtension = preg_replace('/\.[^.]+?$/', '', $path);
-            var_dump([$pathWihtouExtension]);
             $this->writeMDDocs($options['docsPath'] ?? ($pathWihtouExtension . '.md'));
             $this->writeMethods($options['methodsPath'] ?? ($pathWihtouExtension . '.php'));
         }

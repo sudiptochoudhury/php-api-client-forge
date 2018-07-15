@@ -24,3 +24,6 @@
 
 ### 0.0.5
 - Minor fix for default documentation file extensions
+
+### 0.0.6
+- Minor fix to remove debug logs
