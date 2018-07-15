@@ -22,6 +22,14 @@ class Import
     protected $DEFAULT_API_JSON_PATH = './config/api.json';
     protected $DEFAULT_SOURCE_JSON_PATH = './config/postman.json';
 
+    /**
+     * Import constructor.
+     *
+     * @param string $filePath Path containing source (Postman generated) json file
+     * @param array  $options
+     *
+     * @throws \ReflectionException
+     */
     public function __construct($filePath = '', $options = [])
     {
 
@@ -50,6 +58,11 @@ class Import
         $this->options = $options;
     }
 
+    /**
+     * @param $filePath Path containing source (Postman generated) json file
+     *
+     * @return array
+     */
     protected function importFromJson($filePath)
     {
 
@@ -111,6 +124,11 @@ class Import
         return $data;
     }
 
+    /**
+     * @param array $request
+     *
+     * @return array
+     */
     protected function parseOperation($request = [])
     {
         $meta = [$request];
@@ -128,6 +146,13 @@ class Import
 
     }
 
+    /**
+     * @param array  $paths
+     * @param string $bodyRaw
+     * @param array  $meta
+     *
+     * @return array
+     */
     protected function parseParams($paths = [], $bodyRaw = '', $meta = [])
     {
         $params = [];
@@ -164,11 +189,22 @@ class Import
 
     }
 
+    /**
+     * @param       $url
+     * @param array $meta
+     *
+     * @return string
+     */
     protected function parseUri($url, $meta = [])
     {
         return implode('/', array_slice($url['path'], 2));
     }
 
+    /**
+     * @param $api
+     *
+     * @return string
+     */
     protected function parseApiName($api)
     {
 
@@ -207,6 +243,13 @@ class Import
 
     }
 
+    /**
+     * @param        $operation
+     * @param array  $api
+     * @param string $method
+     *
+     * @return array
+     */
     protected function generateDocs($operation, $api = [], $method = '') {
 
 //        $baseUri  = $this->clientOptions['base_url'] ?: '';
@@ -251,6 +294,11 @@ class Import
 
     }
 
+    /**
+     * @param string $string
+     *
+     * @return string
+     */
     protected function sluggify($string = '')
     {
         if (!empty($string)) {
@@ -261,22 +309,36 @@ class Import
         return $string;
     }
 
-
+    /**
+     * @return array
+     */
     public function getData()
     {
         return $this->data;
     }
 
+    /**
+     * @return array
+     */
     public function getDocs()
     {
         return $this->docsData;
     }
 
+    /**
+     * @return array
+     */
     public function getMethods()
     {
         return $this->methodData;
     }
 
+    /**
+     * @param string $path
+     * @param array  $options
+     *
+     * @return bool|int
+     */
     public function writeData($path = '', $options = [])
     {
         if (empty($path)) {
@@ -300,7 +362,11 @@ class Import
         return file_put_contents($path, $json);
     }
 
-
+    /**
+     * @param string $path
+     *
+     * @return bool|int
+     */
     protected function writeMDDocs($path = '') {
 
         if (empty($path)) {
@@ -347,6 +413,11 @@ class Import
         return file_put_contents($path, $mdText);
     }
 
+    /**
+     * @param string $path
+     *
+     * @return bool|int
+     */
     protected function writeMethods($path = '') {
 
         if (empty($path)) {
@@ -367,9 +438,17 @@ class Import
         return file_put_contents($path, $methodText);
     }
 
+    /**
+     * @return string
+     * @throws \ReflectionException
+     */
     private function getChildDir() {
         return dirname((new \ReflectionClass(static::class))->getFileName());
     }
+
+    /**
+     * @return string
+     */
     private function getDir() {
         return __DIR__;
     }

@@ -36,6 +36,11 @@ class Client
     protected $options;
     protected $rootPath;
 
+    /**
+     * Client constructor.
+     *
+     * @param array $config
+     */
     public function __construct($config = [])
     {
         $this->setOptions($config);
@@ -50,6 +55,11 @@ class Client
 
     }
 
+    /**
+     * @param array $options
+     *
+     * @return $this
+     */
     public function setOptions($options = [])
     {
         $myProperties = get_class_vars(__CLASS__);
@@ -68,6 +78,12 @@ class Client
         return $this;
     }
 
+    /**
+     * @param       $options
+     * @param array $rootOption
+     *
+     * @return array|mixed
+     */
     protected function parseOptions($options, $rootOption = [])
     {
 
@@ -91,6 +107,11 @@ class Client
 
     }
 
+    /**
+     * @param array $descriptionOptions
+     *
+     * @return $this
+     */
     public function setDescription($descriptionOptions = [])
     {
 
@@ -129,12 +150,22 @@ class Client
         return $this;
     }
 
+    /**
+     * @param array $clientOptions
+     *
+     * @return $this
+     */
     public function createClient($clientOptions = [])
     {
         $this->client = new GHClient($clientOptions);
         return $this;
     }
 
+    /**
+     * @param array $clientOptions
+     *
+     * @return $this
+     */
     protected function setClient($clientOptions = [])
     {
 
@@ -144,6 +175,12 @@ class Client
         return $this;
     }
 
+    /**
+     * @param $name
+     * @param $arguments
+     *
+     * @return mixed
+     */
     public function __call($name, $arguments)
     {
         $api = $this->consumer;
@@ -154,6 +191,13 @@ class Client
         throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s().', get_called_class(), $name));
     }
 
+    /**
+     * @param string $source
+     * @param string $destination
+     * @param array  $options
+     *
+     * @return bool|int
+     */
     public function importApi($source = '', $destination = '', $options = [])
     {
         if (empty($source)) {
@@ -177,9 +221,17 @@ class Client
         ];
     }
 
+    /**
+     * @return string
+     * @throws \ReflectionException
+     */
     private function getChildDir() {
         return dirname((new \ReflectionClass(static::class))->getFileName());
     }
+
+    /**
+     * @return string
+     */
     private function getDir() {
         return __DIR__;
     }
