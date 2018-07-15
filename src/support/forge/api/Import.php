@@ -292,9 +292,11 @@ class Import
 
 //        $options['skipDocs'] = true;
         if (empty($options['skipDocs'])) {
-            $pathWihtouExtension = preg_replace('/\..+?$/', '', $path);
-            $this->writeMDDocs($options['docsPath'] ?? $pathWihtouExtension . '.md');
-            $this->writeMethods($options['methodsPath'] ?? $pathWihtouExtension . '.php');
+            var_dump([$path]);
+            $pathWihtouExtension = preg_replace('/\.[^.]+?$/', '', $path);
+            var_dump([$pathWihtouExtension]);
+            $this->writeMDDocs($options['docsPath'] ?? ($pathWihtouExtension . '.md'));
+            $this->writeMethods($options['methodsPath'] ?? ($pathWihtouExtension . '.php'));
         }
 
         return file_put_contents($path, $json);
@@ -308,7 +310,7 @@ class Import
             if (empty($path)) {
                 $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH;
             }
-            $pathWithMDExtension = preg_replace('/\..+?$/', '.md', $path);
+            $path = preg_replace('/\.[^.]+?$/', '.md', $path);
         }
         if (file_exists($path)) {
             rename($path, $path . '.bak');
@@ -354,7 +356,7 @@ class Import
             if (empty($path)) {
                 $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH;
             }
-            $pathWithPHPExtension = preg_replace('/\..+?$/', '.php', $path);
+            $path = preg_replace('/\.[^.]+?$/', '.php', $path);
         }
         if (file_exists($path)) {
             rename($path, $path . '.bak');

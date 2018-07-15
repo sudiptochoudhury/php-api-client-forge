@@ -20,4 +20,7 @@
   
 ### 0.0.4
 - Option to set custom documentation destination paths in  `importApi` function
-- 
+- Better default documentation filenames
+
+### 0.0.5
+- Minor fix for default documentation file extensions
