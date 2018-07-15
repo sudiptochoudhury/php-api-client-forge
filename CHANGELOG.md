@@ -18,3 +18,6 @@
 - Markdown Documentation generator
 - PhpDoc @method declarations for API magic methods
   
+### 0.0.4
+- Option to set custom documentation destination paths in  `importApi` function
+- 

@@ -154,7 +154,7 @@ class Client
         throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s().', get_called_class(), $name));
     }
 
-    public function importApi($source = '', $destination = '', $sourceType = 'postman')
+    public function importApi($source = '', $destination = '', $options = [])
     {
         if (empty($source)) {
             $source = realpath($this->rootPath . $this->DEFAULT_SOURCE_JSON_PATH);
@@ -162,7 +162,7 @@ class Client
         if (empty($destination)) {
             $destination = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
         }
-        return (new Import($source, $this->getAllOptions()))->writeData($destination);
+        return (new Import($source, $this->getAllOptions()))->writeData($destination, $options);
     }
 
     /**

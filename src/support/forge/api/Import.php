@@ -292,8 +292,9 @@ class Import
 
 //        $options['skipDocs'] = true;
         if (empty($options['skipDocs'])) {
-            $this->writeMDDocs($options['docsPath'] ?? $path . '.md');
-            $this->writeMethods($options['methodsPath'] ?? $path . '.php');
+            $pathWihtouExtension = preg_replace('/\..+?$/', '', $path);
+            $this->writeMDDocs($options['docsPath'] ?? $pathWihtouExtension . '.md');
+            $this->writeMethods($options['methodsPath'] ?? $pathWihtouExtension . '.php');
         }
 
         return file_put_contents($path, $json);
@@ -303,10 +304,11 @@ class Import
     protected function writeMDDocs($path = '') {
 
         if (empty($path)) {
-            $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH. '.md');
+            $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
             if (empty($path)) {
-                $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH. '.md';
+                $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH;
             }
+            $pathWithMDExtension = preg_replace('/\..+?$/', '.md', $path);
         }
         if (file_exists($path)) {
             rename($path, $path . '.bak');
@@ -348,16 +350,18 @@ class Import
     protected function writeMethods($path = '') {
 
         if (empty($path)) {
-            $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH. '.php');
+            $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
             if (empty($path)) {
-                $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH. '.php';
+                $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH;
             }
+            $pathWithPHPExtension = preg_replace('/\..+?$/', '.php', $path);
         }
         if (file_exists($path)) {
             rename($path, $path . '.bak');
         }
 
-        $methods = $this->methodData ?: [];
+
+        $methods = array_merge(["<?php", "/** "], $this->methodData ?: [], [" */", ""]);
         $methodText = implode("\n", $methods);
 
         return file_put_contents($path, $methodText);
