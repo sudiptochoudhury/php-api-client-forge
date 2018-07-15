@@ -234,18 +234,18 @@ class Import
      */
     protected function generateMethod($apiName, $operation = [], $api = []) {
 
-        $method = [' * @method static array'];
+        $method = [' * @method', 'array'];
 
         $data = "";
         $request = $api['request'];
-        $description =  preg_replace('/[\r\n]/', '', $request['description']);
+        $description =  preg_replace('/[\r\n]/', ' ', $request['description']);
         $params = $operation['parameters'];
         if (!empty($params)) {
             $data = 'array $parameters';
         }
 
         $method[] = "$apiName($data)";
-        $method[] = $description;
+//        $method[] = $description;
 
         return implode("\t", $method);
 

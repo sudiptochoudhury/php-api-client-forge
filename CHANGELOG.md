@@ -27,3 +27,7 @@
 
 ### 0.0.6
 - Minor fix to remove debug logs
+
+### 0.0.7
+- Fix for @method doc generation 
+- skip description in @method doc
