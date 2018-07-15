@@ -11,20 +11,37 @@ use Doctrine\Common\Inflector\Inflector;
  */
 class Import
 {
-    private $data = '';
-    private $options = [];
-    private $rootPath;
+    protected $data = [];
+    protected $sourceData = [];
+    protected $docsData = [];
+    protected $methodData = [];
+    protected $options = [];
+    protected $clientOptions = [];
+    protected $rootPath;
+
+    protected $DEFAULT_API_JSON_PATH = './config/api.json';
+    protected $DEFAULT_SOURCE_JSON_PATH = './config/postman.json';
 
     public function __construct($filePath = '', $options = [])
     {
 
+        foreach($options as $key => $item) {
+            if (property_exists($this, $key)) {
+                $this->{$key} = $item;
+            }
+        }
+
         $data = '';
-        $this->rootPath = $rootPath = realpath(__DIR__ . './../');
+        if (empty($this->rootPath)) {
+            $this->rootPath = realpath($this->getChildDir()). '/';
+        }
+        $rootPath = $this->rootPath;
+
         if (!file_exists($filePath)) {
             $filePath = realpath($rootPath . '/' . $filePath);
         }
         if (!file_exists($filePath)) {
-            $filePath = realpath($rootPath . '/config/postman.json');
+            $filePath = realpath($rootPath . $this->DEFAULT_SOURCE_JSON_PATH);
         }
         if (file_exists($filePath)) {
             $data = $this->importFromJson($filePath);
@@ -33,41 +50,34 @@ class Import
         $this->options = $options;
     }
 
-    public function getData()
+    protected function importFromJson($filePath)
     {
-        return $this->data;
-    }
 
-    public function writeData($path = '')
-    {
-        if (empty($path)) {
-            $path = realpath($this->rootPath . '/config/api.json');
-        }
-        if (file_exists($path)) {
-            rename($path, $path . '.bak');
-        }
-        $json = \GuzzleHttp\json_encode($this->data, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
-        return file_put_contents($path, $json);
-    }
-
-
-    private function importFromJson($filePath)
-    {
         if (!file_exists($filePath)) {
             $filePath = realpath($this->rootPath . '/' . $filePath);
         }
-        $json = \GuzzleHttp\json_decode(file_get_contents($filePath), true);
+
+        $this->sourceData = $json = \GuzzleHttp\json_decode(file_get_contents($filePath), true);
         $data = [];
+        $docs = [];
+        $methods = [];
 
         if (!empty($json)) {
+            $globalInfo = $json['info'];
+            $globalInfoName = $globalInfo['name'];
             $items = $json['item'];
 
             $operations = [];
-            foreach ($items as $apiGroup) {
-//                $apiGroupName = $apiGroup['name'];
-//                $apiGroupDescription = $apiGroup['description'];
+            foreach ($items as $itemIndex => $apiGroup) {
+
+                $apiGroupName = $apiGroup['name'];
+                $apiGroupDescription = $apiGroup['description'];
+                if (empty($docs[$apiGroupName])) {
+                    $docs[$apiGroupName] = ['description' => $apiGroupDescription, 'items' => []];
+                }
+
                 $apiGroupItems = $apiGroup['item'];
-                foreach ($apiGroupItems as $api) {
+                foreach ($apiGroupItems as $apiIndex => $api) {
                     $apiName = $this->parseApiName($api);
                     $request = $api['request'];
                     $operation = $this->parseOperation($request);
@@ -75,8 +85,11 @@ class Import
                         $apiName = $this->sluggify($api['name']);
                     }
                     $operations[$apiName] = $operation;
-                }
 
+                    $methods[$apiName] = $this->generateMethod($apiName, $operation, $api);
+                    $docs[$apiGroupName]['items'][$apiName] = $this->generateDocs($api, $methods[$apiName]);
+
+                }
             }
 
             if (!empty($operations)) {
@@ -91,12 +104,14 @@ class Import
                 ];
             }
 
+            $this->docsData = ['title' => $globalInfoName, 'groups' => [$docs]];
+            $this->methodData = $methods;
         }
 
         return $data;
     }
 
-    private function parseOperation($request = [])
+    protected function parseOperation($request = [])
     {
         $meta = [$request];
         $method = $request['method'];
@@ -113,7 +128,7 @@ class Import
 
     }
 
-    private function parseParams($paths = [], $bodyRaw = '', $meta = [])
+    protected function parseParams($paths = [], $bodyRaw = '', $meta = [])
     {
         $params = [];
         foreach ($paths as $path) {
@@ -149,12 +164,12 @@ class Import
 
     }
 
-    private function parseUri($url, $meta = [])
+    protected function parseUri($url, $meta = [])
     {
         return implode('/', array_slice($url['path'], 2));
     }
 
-    private function parseApiName($api)
+    protected function parseApiName($api)
     {
 
         $methodMap = [
@@ -192,15 +207,128 @@ class Import
 
     }
 
-    private function sluggify($string = '')
+    protected function generateDocs($api = [], $method) {
+
+//        $baseUri  = $this->clientOptions['base_url'] ?: '';
+
+//        $name = $api['name'];
+//        $request = $api['request'];
+//        $response = $api['response'];
+        /** @var $method */
+        /** @var $header */
+        /** @var $body */
+        /** @var $url */
+        /** @var $description */
+//        extract($request);
+
+        return ['method' => $method,  'details' => $api];
+
+    }
+    protected function generateMethod($apiName, $operation = [], $api = []) {
+
+        $method = ['array'];
+
+        $data = "";
+        $request = $api['request'];
+        $description = $request['description'];
+        $params = $operation['parameters'];
+        if (!empty($params)) {
+            $data = 'array $parameters';
+        }
+
+        $method[] = "$apiName($data)";
+        $method[] = $description;
+
+        return implode("\t", $method);
+
+    }
+
+    protected function sluggify($string = '')
     {
         if (!empty($string)) {
             $regexs = ['/[^\w\s_.-]|\s+?/', '/-+?/'];
             $replacer = ['-', ' '];
-            $string = str_replace(' ', '',
-                lcfirst(ucwords(preg_replace($regexs, $replacer, strtolower($string)))));
+            $string = Inflector::camelize((preg_replace($regexs, $replacer, strtolower($string))));
         }
         return $string;
+    }
+
+
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    public function getDocs()
+    {
+        return $this->docsData;
+    }
+
+    public function getMethods()
+    {
+        return $this->methodData;
+    }
+
+    public function writeData($path = '', $options = [])
+    {
+        if (empty($path)) {
+            $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
+            if (empty($path)) {
+                $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH;
+            }
+        }
+        if (file_exists($path)) {
+            rename($path, $path . '.bak');
+        }
+        $json = \GuzzleHttp\json_encode($this->data, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
+
+        $options['skipDocs'] = true;
+        if (empty($options['skipDocs'])) {
+            $this->writeMDDocs($options['docsPath'] ?? $path . '.md');
+            $this->writeMethods($options['methodsPath'] ?? $path . '.php');
+        }
+
+        return file_put_contents($path, $json);
+    }
+
+
+    protected function writeMDDocs($path = '') {
+
+        if (empty($path)) {
+            $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH. '.md');
+            if (empty($path)) {
+                $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH. '.md';
+            }
+        }
+        if (file_exists($path)) {
+            rename($path, $path . '.bak');
+        }
+
+        $json = \GuzzleHttp\json_encode($this->docsData, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
+        return file_put_contents($path, $json);
+    }
+
+    protected function writeMethods($path = '') {
+
+        if (empty($path)) {
+            $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH. '.php');
+            if (empty($path)) {
+                $path = $this->rootPath . $this->DEFAULT_API_JSON_PATH. '.php';
+            }
+        }
+        if (file_exists($path)) {
+            rename($path, $path . '.bak');
+        }
+
+        $json = \GuzzleHttp\json_encode($this->methodData, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
+        return file_put_contents($path, $json);
+    }
+
+    private function getChildDir() {
+        return dirname((new \ReflectionClass(static::class))->getFileName());
+    }
+    private function getDir() {
+        return __DIR__;
     }
 
 }

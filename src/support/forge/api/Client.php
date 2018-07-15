@@ -14,9 +14,12 @@ use GuzzleHttp\Command\Guzzle\Description;
 class Client
 {
 
-    private $DEFAULTS = [
+    protected $DEFAULT_API_JSON_PATH = './config/api.json';
+    protected $DEFAULT_SOURCE_JSON_PATH = './config/postman.json';
+
+    protected $DEFAULTS = [
         'description' => [
-            'jsonPath' => './config/api.json',
+            'jsonPath' => '',
             'options' => [],
         ],
         'client' => [
@@ -27,17 +30,16 @@ class Client
         ],
     ];
 
-    private $client;
-    private $description;
-    private $consumer;
-    private $options;
-    private $rootPath;
+    protected $client;
+    protected $description;
+    protected $consumer;
+    protected $options;
+    protected $rootPath;
 
     public function __construct($config = [])
     {
         $this->setOptions($config);
         $mergedOptions = $this->options;
-
         /** @var $description */
         /** @var $client */
         extract($mergedOptions);
@@ -46,24 +48,27 @@ class Client
 
         $this->setClient($client);
 
-        return $this->consumer;
-
     }
 
     public function setOptions($options = [])
     {
+        $myProperties = get_class_vars(__CLASS__);
+        $myDefaults = $myProperties['DEFAULTS'];
+        $defaults = array_replace_recursive($myDefaults, $this->DEFAULTS);
 
-        $defaults = $this->DEFAULTS;
-        $this->rootPath = realpath(__DIR__) . '/';
-        $defaults['description']['jsonPath'] = realpath($this->rootPath . $defaults['description']['jsonPath']);
-        $mergedOptions = array_merge_recursive($defaults, $options);
+        if (empty($this->rootPath)) {
+            $this->rootPath = realpath($this->getChildDir()) . '/';
+        }
+
+        $defaults['description']['jsonPath'] = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
+        $mergedOptions = array_replace_recursive($defaults, $options);
         $parsedOptions = $this->parseOptions($mergedOptions, $options);
         $this->options = $parsedOptions;
 
         return $this;
     }
 
-    private function parseOptions($options, $rootOption = [])
+    protected function parseOptions($options, $rootOption = [])
     {
 
         // @todo: need to make it is_iterable
@@ -89,6 +94,7 @@ class Client
     public function setDescription($descriptionOptions = [])
     {
 
+        $optionsJsonPath = $this->options['description']['jsonPath'];
         /** @var $jsonPath */
         /** @var $options */
         extract($descriptionOptions);
@@ -96,13 +102,19 @@ class Client
         if ($descriptionOptions instanceof Description) {
             $this->description = $descriptionOptions;
         } else {
-            if (empty($jsonPath)) {
-                $jsonPath = realpath($this->options['description']['jsonPath']);
+            if (empty($jsonPath) && !empty($optionsJsonPath)) {
+                $jsonPath = realpath($optionsJsonPath);
             }
 
             try {
+                $description = [];
 
-                $description = json_decode(file_get_contents($jsonPath), true);
+                if (!empty($jsonPath)) {
+                    $description = json_decode(file_get_contents($jsonPath), true);
+                }
+                if (empty($description)) {
+                    $description = [];
+                }
                 if (empty($description['baseUri'])) {
                     $description['baseUri'] = $this->options['client']['base_uri'];
                 }
@@ -123,7 +135,7 @@ class Client
         return $this;
     }
 
-    private function setClient($clientOptions = [])
+    protected function setClient($clientOptions = [])
     {
 
         $this->createClient($clientOptions);
@@ -145,11 +157,30 @@ class Client
     public function importApi($source = '', $destination = '', $sourceType = 'postman')
     {
         if (empty($source)) {
-            $source = realpath($this->rootPath . './config/postman.json');
+            $source = realpath($this->rootPath . $this->DEFAULT_SOURCE_JSON_PATH);
         }
         if (empty($destination)) {
-            $destination = realpath($this->rootPath . './config/api.json');
+            $destination = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
         }
-        return (new Import($source))->writeData($destination);
+        return (new Import($source, $this->getAllOptions()))->writeData($destination);
+    }
+
+    /**
+     * @return array
+     */
+    protected function getAllOptions() {
+        return [
+            'clientOptions' => $this->options,
+            'rootPath' => $this->rootPath,
+            'DEFAULT_SOURCE_JSON_PATH' => $this->DEFAULT_SOURCE_JSON_PATH,
+            'DEFAULT_API_JSON_PATH' => $this->DEFAULT_API_JSON_PATH,
+        ];
+    }
+
+    private function getChildDir() {
+        return dirname((new \ReflectionClass(static::class))->getFileName());
+    }
+    private function getDir() {
+        return __DIR__;
     }
 }
