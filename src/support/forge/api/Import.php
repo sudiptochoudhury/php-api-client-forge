@@ -498,7 +498,7 @@ class Import
                 extract($item);
                 $row = [];
                 $row[] = $apiName . "(" . (empty($operation['parameters']) ? '' : 'array') . ")";
-                $row[] = " \[{$operation['httpMethod']}\] {$operation['uri']} ";
+                $row[] = " \[{$operation['httpMethod']}\] /{$operation['uri']} ";
                 $row[] = implode("<br/>", array_keys($operation['parameters']));
                 $row[] = $this->sanitizeDescription($api['request']['description']);
                 $row[] = '';
