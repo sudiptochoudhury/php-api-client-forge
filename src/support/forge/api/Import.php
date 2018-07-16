@@ -485,8 +485,8 @@ class Import
         $md[] = "";
         $md[] = "### Available API Methods";
         $md[] = "";
-        $md[] = "| Method             | [method]Endpoint     | Description    | Parameters |";
-        $md[] = "|--------------------|----------------------|----------------|------------|";
+        $md[] = "| Method             | [method]Endpoint     | Parameters    | Description |";
+        $md[] = "|--------------------|----------------------|---------------|-------------|";
 
         $groups = $data['groups'];
         foreach ($groups as $groupName => $group) {
@@ -499,8 +499,8 @@ class Import
                 $row = [];
                 $row[] = $apiName . "(" . (empty($operation['parameters']) ? '' : 'array') . ")";
                 $row[] = " \[{$operation['httpMethod']}\] {$operation['uri']} ";
-                $row[] = $this->sanitizeDescription($api['request']['description']);
                 $row[] = implode("<br/>", array_keys($operation['parameters']));
+                $row[] = $this->sanitizeDescription($api['request']['description']);
                 $row[] = '';
 
                 $md[] = trim(implode(' | ', $row), ' ');

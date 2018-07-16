@@ -38,4 +38,8 @@
 
 ### 0.0.9
 - Escape pipe characters in table cell values in markdown 
-- Fix query parameter inclusion in API Definition 
+- Fix query parameter inclusion in API Definition
+
+### 0.1.0
+- Change column order for parameters in Markdown documentation   
+  
