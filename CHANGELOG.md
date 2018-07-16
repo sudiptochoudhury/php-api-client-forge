@@ -35,3 +35,7 @@
 ### 0.0.8
 - Fix for @method doc generation & markdown doc generation by removing redundant spaces and newlines 
 - Introduce shorter description in @method doc
+
+### 0.0.9
+- Escape pipe characters in table cell values in markdown 
+- Fix query parameter inclusion in API Definition 

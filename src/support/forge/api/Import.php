@@ -191,9 +191,11 @@ class Import
 
         if (!empty($queryParams = ($url['query'] ?? null))) {
             foreach ($queryParams as $query) {
-                if (!empty(preg_match('/^{/', $query['value']))) {
-                    $params[$query['key']] = ['location' => 'uri'];
+                $paramData = ['location' => 'uri'];
+                if (empty(preg_match('/^{/', $query['value']))) {
+                    $paramData['default'] = $query['value'];
                 }
+                $params[$query['key']] = $paramData;
             }
         }
 
@@ -215,6 +217,9 @@ class Import
         if (!empty($queryParams = ($url['query'] ?? null))) {
             $queries = [];
             foreach ($queryParams as $query) {
+                if (empty(preg_match('/^{/', $query['value']))) {
+                    $query['value'] = '{' . $query['key'] . '}';
+                }
                 $queries[] = "{$query['key']}={$query['value']}";
             }
             if (!empty($queries)) {
@@ -344,7 +349,7 @@ class Import
                 'e' => ['/\[[^]]+\]\([^)]+\)/', '/[\r\n]+/'], 'r' => ['', ' ']
             ],
             'noMarkdown-' => [
-                'e' => ['/[\r\n]+/'], 'r' => ['<br/>']
+                'e' => ['/[\r\n]+/', '/\|/'], 'r' => ['<br/>', '\|']
             ],
             'noMarkdownshorten' => [
                 'e' => ['/\*{2,}[\s\S]+$/', '/\*+/'], 'r' => ['', '']
