@@ -47,4 +47,9 @@
 - Change column order for parameters in Markdown documentation
 
 ### 0.1.2
-- Add / before endpoint in markdown documentation     
+- Add / before endpoint in markdown documentation
+
+### 0.1.3
+- Shorten MD documentation to have 3 columns merge Method and Endpoint
+- Endpoint in MD Documentation now may have links to external Documentation (if available as [API DOC] link in description)
+        

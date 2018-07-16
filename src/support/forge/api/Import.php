@@ -485,8 +485,8 @@ class Import
         $md[] = "";
         $md[] = "### Available API Methods";
         $md[] = "";
-        $md[] = "| Method             | [method]Endpoint     | Parameters    | Description |";
-        $md[] = "|--------------------|----------------------|---------------|-------------|";
+        $md[] = "| Method & Endpoint | Parameters | Description |";
+        $md[] = "|-------------------|------------|-------------|";
 
         $groups = $data['groups'];
         foreach ($groups as $groupName => $group) {
@@ -497,8 +497,10 @@ class Import
                 /** @var $method */
                 extract($item);
                 $row = [];
-                $row[] = $apiName . "(" . (empty($operation['parameters']) ? '' : 'array') . ")";
-                $row[] = " \[{$operation['httpMethod']}\] /{$operation['uri']} ";
+                $row[] = implode('<br/>', [
+                    $this->getMDApiName($apiName, $operation, $api, $method),
+                    $this->getMDApiEndpoint($operation, $api, $method)
+                ]);
                 $row[] = implode("<br/>", array_keys($operation['parameters']));
                 $row[] = $this->sanitizeDescription($api['request']['description']);
                 $row[] = '';
@@ -510,6 +512,37 @@ class Import
         $mdText = implode("\n", $md);
 
         return file_put_contents($path, $mdText);
+    }
+
+    /**
+     * @param $apiName
+     * @param $operation
+     * @param $api
+     * @param $method
+     *
+     * @return string
+     */
+    protected function getMDApiName($apiName, $operation, $api, $method) {
+        $docApiName = $apiName . "(" . (empty($operation['parameters']) ? '' : 'array') . ")";
+        return $docApiName;
+    }
+
+    /**
+     * @param $operation
+     * @param $api
+     * @param $method
+     *
+     * @return string
+     */
+    protected function getMDApiEndpoint($operation, $api, $method) {
+        $anchor = 'API DOC';
+        $description = $api['request']['description'];
+        $matched = preg_match('/\[' . $anchor . '\]\([^)]+\)/', $description, $apiDocUrl);
+        $docApiEndpoint = " \[{$operation['httpMethod']}\] /{$operation['uri']} ";
+        if (!empty($matched) && isset($apiDocUrl[0])) {
+            $docApiEndpoint = str_replace($anchor, $docApiEndpoint, $apiDocUrl[0]);
+        }
+        return $docApiEndpoint;
     }
 
     /**
