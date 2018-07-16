@@ -33,7 +33,7 @@ class Import
     public function __construct($filePath = '', $options = [])
     {
 
-        foreach($options as $key => $item) {
+        foreach ($options as $key => $item) {
             if (property_exists($this, $key)) {
                 $this->{$key} = $item;
             }
@@ -41,7 +41,7 @@ class Import
 
         $data = '';
         if (empty($this->rootPath)) {
-            $this->rootPath = realpath($this->getChildDir()). '/';
+            $this->rootPath = realpath($this->getChildDir()) . '/';
         }
         $rootPath = $this->rootPath;
 
@@ -133,29 +133,31 @@ class Import
     {
         $meta = [$request];
         $method = $request['method'];
-//        $header = $request['header'];
+        //        $header = $request['header'];
         $body = $request['body'];
         $url = $request['url'];
         $data = [
             'httpMethod' => $method,
             'uri' => $this->parseUri($url, $meta),
             'responseModel' => 'getResponse',
-            'parameters' => $this->parseParams($url['path'], $body['raw'], $meta),
+            'parameters' => $this->parseParams($url, $body['raw'], $meta),
         ];
         return $data;
 
     }
 
     /**
-     * @param array  $paths
+     * @param array  $url
      * @param string $bodyRaw
      * @param array  $meta
      *
      * @return array
      */
-    protected function parseParams($paths = [], $bodyRaw = '', $meta = [])
+    protected function parseParams($url = [], $bodyRaw = '', $meta = [])
     {
+        $paths = $url['path'];
         $params = [];
+
         foreach ($paths as $path) {
             if (!!preg_match('/^{/', $path) !== false) {
                 $paramName = preg_replace('/^{|}$/', '', $path);
@@ -171,6 +173,7 @@ class Import
 
             }
         }
+
         $rawParams = json_decode($bodyRaw, true);
         if (!empty($rawParams)) {
             foreach ($rawParams as $paramName => $paramItem) {
@@ -185,6 +188,15 @@ class Import
                 ];
             }
         }
+
+        if (!empty($queryParams = ($url['query'] ?? null))) {
+            foreach ($queryParams as $query) {
+                if (!empty(preg_match('/^{/', $query['value']))) {
+                    $params[$query['key']] = ['location' => 'uri'];
+                }
+            }
+        }
+
         return $params;
 
     }
@@ -197,7 +209,19 @@ class Import
      */
     protected function parseUri($url, $meta = [])
     {
-        return implode('/', array_slice($url['path'], 2));
+        $uri = implode('/', array_slice($url['path'], 2));
+        $queryString = '';
+
+        if (!empty($queryParams = ($url['query'] ?? null))) {
+            $queries = [];
+            foreach ($queryParams as $query) {
+                $queries[] = "{$query['key']}={$query['value']}";
+            }
+            if (!empty($queries)) {
+                $queryString = '?' . implode('&', $queries);
+            }
+        }
+        return $uri . $queryString;
     }
 
     /**
@@ -250,19 +274,20 @@ class Import
      *
      * @return array
      */
-    protected function generateDocs($operation, $api = [], $method = '') {
+    protected function generateDocs($operation, $api = [], $method = '')
+    {
 
-//        $baseUri  = $this->clientOptions['base_url'] ?: '';
+        //        $baseUri  = $this->clientOptions['base_url'] ?: '';
 
-//        $name = $api['name'];
-//        $request = $api['request'];
-//        $response = $api['response'];
+        //        $name = $api['name'];
+        //        $request = $api['request'];
+        //        $response = $api['response'];
         /** @var $method */
         /** @var $header */
         /** @var $body */
         /** @var $url */
         /** @var $description */
-//        extract($request);
+        //        extract($request);
 
         return compact('operation', 'api', 'method');
 
@@ -275,23 +300,91 @@ class Import
      *
      * @return string
      */
-    protected function generateMethod($apiName, $operation = [], $api = []) {
+    protected function generateMethod($apiName, $operation = [], $api = [])
+    {
 
         $method = [' * @method', 'array'];
 
         $data = "";
         $request = $api['request'];
-        $description =  preg_replace('/[\r\n]/', ' ', $request['description']);
+        $description = $this->sanitizeDescription($request['description'], ['noMarkdown' => true, 'shorten' => true]);
         $params = $operation['parameters'];
         if (!empty($params)) {
             $data = 'array $parameters';
         }
 
         $method[] = "$apiName($data)";
-//        $method[] = $description;
+        $method[] = $description;
 
         return implode("\t", $method);
 
+    }
+
+    /**
+     * @param string $description
+     * @param array  $options
+     *
+     * @return string
+     */
+    protected function sanitizeDescription($description = '', $options = [])
+    {
+        $defaults = ['noMarkdown' => false, 'shorten' => false];
+        $options = array_merge($defaults, $options);
+
+        $pre = [
+            'e' => ['/\[[^]]+\]\(\)/', ], 'r' => ['',]
+        ];
+        $post = [
+            'e' => ['/\s+/', '/^[\s]+|[\s]+$/', '/(<br\/>)+/', '/^(<br\/>)+|(<br\/>)+$/m'], 'r' =>
+                [' ', '', '<br/>', '']
+        ];
+
+        $optionsReplaceMap = [
+            'noMarkdown' => [
+                'e' => ['/\[[^]]+\]\([^)]+\)/', '/[\r\n]+/'], 'r' => ['', ' ']
+            ],
+            'noMarkdown-' => [
+                'e' => ['/[\r\n]+/'], 'r' => ['<br/>']
+            ],
+            'noMarkdownshorten' => [
+                'e' => ['/\*{2,}[\s\S]+$/', '/\*+/'], 'r' => ['', '']
+            ],
+            'noMarkdownshorten-' => [
+                'e' => ['/\*+/'], 'r' => ['']
+            ],
+            'noMarkdown-shorten' => [
+                'e' => ['/\*{2,}[\s\S]+$/', '/<br\/>[\s\S]+$/'], 'r' => ['', '']
+            ],
+        ];
+
+        if (!empty($description)) {
+            $regExps = array_merge([], $pre['e']);
+            $replaces = array_merge([], $pre['r']);
+            foreach($options as $key => $value) {
+                $value = $value ? '': '-';
+                $keyValue = $key.$value;
+                if (!empty($map = $optionsReplaceMap[$keyValue] ?? null)) {
+                    $regExps = array_merge($regExps, $map['e']);
+                    $replaces = array_merge($replaces, $map['r']);
+                }
+                foreach($options as $childKey => $childValue) {
+                    if ($key != $childKey) {
+                        $childValue = ($options[$childKey] ?? false) ? '': '-';
+                        $childKeyValue = $keyValue.$childKey.$childValue;
+                        if (!empty($childMap = $optionsReplaceMap[$childKeyValue] ?? null)) {
+                            $regExps = array_merge($regExps, $childMap['e']);
+                            $replaces = array_merge($replaces, $childMap['r']);
+                        }
+                    }
+                }
+            }
+            $regExps = array_merge($regExps, $post['e']);
+            $replaces = array_merge($replaces, $post['r']);
+
+            $description = trim(preg_replace($regExps, $replaces, trim($description)));
+        }
+
+        return $description;
     }
 
     /**
@@ -352,7 +445,7 @@ class Import
         }
         $json = \GuzzleHttp\json_encode($this->data, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
 
-//        $options['skipDocs'] = true;
+        //        $options['skipDocs'] = true;
         if (empty($options['skipDocs'])) {
             $pathWihtouExtension = preg_replace('/\.[^.]+?$/', '', $path);
             $this->writeMDDocs($options['docsPath'] ?? ($pathWihtouExtension . '.md'));
@@ -367,7 +460,8 @@ class Import
      *
      * @return bool|int
      */
-    protected function writeMDDocs($path = '') {
+    protected function writeMDDocs($path = '')
+    {
 
         if (empty($path)) {
             $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
@@ -390,7 +484,7 @@ class Import
         $md[] = "|--------------------|----------------------|----------------|------------|";
 
         $groups = $data['groups'];
-        foreach($groups as $groupName => $group) {
+        foreach ($groups as $groupName => $group) {
             $items = $group['items'];
             foreach ($items as $apiName => $item) {
                 /** @var $api */
@@ -398,9 +492,9 @@ class Import
                 /** @var $method */
                 extract($item);
                 $row = [];
-                $row[] = $apiName . "(" . (empty($operation['parameters']) ? '' : 'Array') . ")";
+                $row[] = $apiName . "(" . (empty($operation['parameters']) ? '' : 'array') . ")";
                 $row[] = " \[{$operation['httpMethod']}\] {$operation['uri']} ";
-                $row[] = preg_replace('/[\r\n]/', '', $api['request']['description']);
+                $row[] = $this->sanitizeDescription($api['request']['description']);
                 $row[] = implode("<br/>", array_keys($operation['parameters']));
                 $row[] = '';
 
@@ -418,7 +512,8 @@ class Import
      *
      * @return bool|int
      */
-    protected function writeMethods($path = '') {
+    protected function writeMethods($path = '')
+    {
 
         if (empty($path)) {
             $path = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
@@ -432,7 +527,7 @@ class Import
         }
 
 
-        $methods = array_merge(["<?php", "/** "], $this->methodData ?: [], [" */", ""]);
+        $methods = array_merge(["<?php", "/** "], $this->methodData ? : [], [" */", ""]);
         $methodText = implode("\n", $methods);
 
         return file_put_contents($path, $methodText);
@@ -442,14 +537,16 @@ class Import
      * @return string
      * @throws \ReflectionException
      */
-    private function getChildDir() {
+    private function getChildDir()
+    {
         return dirname((new \ReflectionClass(static::class))->getFileName());
     }
 
     /**
      * @return string
      */
-    private function getDir() {
+    private function getDir()
+    {
         return __DIR__;
     }
 

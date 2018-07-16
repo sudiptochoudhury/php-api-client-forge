@@ -31,3 +31,7 @@
 ### 0.0.7
 - Fix for @method doc generation 
 - skip description in @method doc
+
+### 0.0.8
+- Fix for @method doc generation & markdown doc generation by removing redundant spaces and newlines 
+- Introduce shorter description in @method doc

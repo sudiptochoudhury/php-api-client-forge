@@ -142,7 +142,7 @@ class Client
 
             } catch (\Exception $ex) {
             } finally {
-                $this->description = new Description($description, $options) ?: [];
+                $this->description = new Description($description, $options) ? : [];
             }
 
         }
@@ -197,6 +197,8 @@ class Client
      * @param array  $options
      *
      * @return bool|int
+     *
+     * @throws \Exception
      */
     public function importApi($source = '', $destination = '', $options = [])
     {
@@ -212,7 +214,8 @@ class Client
     /**
      * @return array
      */
-    protected function getAllOptions() {
+    protected function getAllOptions()
+    {
         return [
             'clientOptions' => $this->options,
             'rootPath' => $this->rootPath,
@@ -225,14 +228,16 @@ class Client
      * @return string
      * @throws \ReflectionException
      */
-    private function getChildDir() {
+    private function getChildDir()
+    {
         return dirname((new \ReflectionClass(static::class))->getFileName());
     }
 
     /**
      * @return string
      */
-    private function getDir() {
+    private function getDir()
+    {
         return __DIR__;
     }
 }
