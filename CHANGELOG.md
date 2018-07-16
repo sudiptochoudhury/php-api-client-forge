@@ -42,4 +42,9 @@
 
 ### 0.1.0
 - Change column order for parameters in Markdown documentation   
-  
+
+### 0.1.1
+- Change column order for parameters in Markdown documentation
+
+### 0.1.2
+- Add / before endpoint in markdown documentation     
