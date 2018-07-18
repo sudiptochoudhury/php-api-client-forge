@@ -53,3 +53,7 @@
 - Shorten MD documentation to have 3 columns merge Method and Endpoint
 - Endpoint in MD Documentation now may have links to external Documentation (if available as [API DOC] link in description)
         
+### 0.2.0
+- Split code into traits and helper classes
+- Ability to apply filtering functions on api names, description etc. while generating JSON and Docs  
+        

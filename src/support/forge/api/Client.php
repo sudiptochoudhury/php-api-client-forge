@@ -3,8 +3,10 @@
 namespace SudiptoChoudhury\Support\Forge\Api;
 
 use GuzzleHttp\Client as GHClient;
-use GuzzleHttp\Command\Guzzle\GuzzleClient;
 use GuzzleHttp\Command\Guzzle\Description;
+use GuzzleHttp\Command\Guzzle\GuzzleClient;
+use SudiptoChoudhury\Support\Utils\Traits\Dirs;
+use SudiptoChoudhury\Support\Forge\Api\Traits\Client\Importable;
 
 /**
  * Class Client
@@ -13,9 +15,10 @@ use GuzzleHttp\Command\Guzzle\Description;
  */
 class Client
 {
+    use Dirs;
+    use Importable;
 
     protected $DEFAULT_API_JSON_PATH = './config/api.json';
-    protected $DEFAULT_SOURCE_JSON_PATH = './config/postman.json';
 
     protected $DEFAULTS = [
         'description' => [
@@ -191,53 +194,4 @@ class Client
         throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s().', get_called_class(), $name));
     }
 
-    /**
-     * @param string $source
-     * @param string $destination
-     * @param array  $options
-     *
-     * @return bool|int
-     *
-     * @throws \Exception
-     */
-    public function importApi($source = '', $destination = '', $options = [])
-    {
-        if (empty($source)) {
-            $source = realpath($this->rootPath . $this->DEFAULT_SOURCE_JSON_PATH);
-        }
-        if (empty($destination)) {
-            $destination = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
-        }
-        return (new Import($source, $this->getAllOptions()))->writeData($destination, $options);
-    }
-
-    /**
-     * @return array
-     */
-    protected function getAllOptions()
-    {
-        return [
-            'clientOptions' => $this->options,
-            'rootPath' => $this->rootPath,
-            'DEFAULT_SOURCE_JSON_PATH' => $this->DEFAULT_SOURCE_JSON_PATH,
-            'DEFAULT_API_JSON_PATH' => $this->DEFAULT_API_JSON_PATH,
-        ];
-    }
-
-    /**
-     * @return string
-     * @throws \ReflectionException
-     */
-    private function getChildDir()
-    {
-        return dirname((new \ReflectionClass(static::class))->getFileName());
-    }
-
-    /**
-     * @return string
-     */
-    private function getDir()
-    {
-        return __DIR__;
-    }
 }
