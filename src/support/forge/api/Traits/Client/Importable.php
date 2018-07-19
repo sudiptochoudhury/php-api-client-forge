@@ -10,6 +10,7 @@ trait Importable
 
     use Filterable;
     protected $DEFAULT_SOURCE_JSON_PATH = './config/postman.json';
+    protected $IMPORTER = Import::class;
 
     /**
      * @param string $source
@@ -28,7 +29,7 @@ trait Importable
         if (empty($destination)) {
             $destination = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
         }
-        return (new Import($source, $this->getAllOptions()))->writeDefinition($destination, $options);
+        return (new $this->IMPORTER($source, $this->getAllOptions()))->writeDefinition($destination, $options);
     }
 
     /**

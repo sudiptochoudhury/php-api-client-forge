@@ -56,4 +56,7 @@
 ### 0.2.0
 - Split code into traits and helper classes
 - Ability to apply filtering functions on api names, description etc. while generating JSON and Docs  
+
+### 0.2.1
+- Add option to override import class in Client class import call 
         
