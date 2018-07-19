@@ -8,12 +8,13 @@ trait Parsers
 {
     /**
      * @param array $request
+     * @param array $params
      *
      * @return array
      */
-    protected function parseOperation($request = [])
+    protected function parseOperation($request = [], $params = [])
     {
-        $meta = [$request];
+        $meta = $params + compact('request');
         $method = $request['method'];
         //        $header = $request['header'];
         $body = $request['body'];
@@ -44,6 +45,7 @@ trait Parsers
         $row['method'] = $this->getMDApiName($apiName, $operation, $api, $method);
         $row['endpoint'] = $this->getMDApiEndpoint($apiName, $operation, $api, $method);
         $row['parameters'] = $this->getMDApiParams($apiName, $operation, $api, $method);
+        $row['defaults'] = $this->getMDApiParamDefaults($apiName, $operation, $api, $method);
         $row['description'] = $this->getMDDescription($apiName, $operation, $api, $method);
 
         return $row;
@@ -60,18 +62,20 @@ trait Parsers
     protected function generateMethod($apiName, $operation = [], $api = [])
     {
 
+        $filterParams = compact('apiName', 'operation', 'api');
         $method = [' * @method', 'array'];
 
         $data = "";
         $request = $api['request'];
-        $description = $this->applyFilter('DocMethodDescription',
-            $this->sanitizeDescription($request['description'], ['noMarkdown' => true, 'shorten' => true]));
-        $params = $this->applyFilter('DocMethodParams', $operation['parameters']);
+        $description = $this->sanitizeDescription($request['description'], ['noMarkdown' => true, 'shorten' => true]);
+        $description = $this->applyFilter('DocMethodDescription', $description, $filterParams);
+        $params = $this->applyFilter('DocMethodParams', $operation['parameters'], $filterParams);
+        $filterParams['params'] = $params;
         if (!empty($params)) {
-            $data = $this->applyFilter('DocMethodData', 'array $parameters', $params);
+            $data = $this->applyFilter('DocMethodData', 'array $parameters', $filterParams);
         }
 
-        $method[] = $this->applyFilter('DocMethodSignature', "$apiName($data)", compact('apiName', 'params'));
+        $method[] = $this->applyFilter('DocMethodSignature', "$apiName($data)", $filterParams);
         $method[] = $description;
 
         return implode("\t", $method);
@@ -88,6 +92,7 @@ trait Parsers
     protected function parseParams($url = [], $bodyRaw = '', $meta = [])
     {
         $paths = $url['path'];
+        $defaults = $url['defaults'] ?? [];
         $params = [];
 
         foreach ($paths as $path) {
@@ -131,8 +136,13 @@ trait Parsers
             }
         }
 
-        $this->applyFilter('Params', $params, $meta + ['body' => $bodyRaw]);
+        foreach($params as $key => $item) {
+            if (isset($defaults[$key])) {
+                $params[$key]['default'] = $defaults[$key];
+            }
+        }
 
+        $params = $this->applyFilter('Params', $params, $meta + ['body' => $bodyRaw]);
         return $params;
 
     }
@@ -162,7 +172,7 @@ trait Parsers
         }
 
         $uriFinal = $uri . $queryString;
-        $this->applyFilter('Uri', $uriFinal, $meta);
+        $uriFinal = $this->applyFilter('Uri', $uriFinal, $meta);
         return $uriFinal;
     }
 
@@ -358,6 +368,20 @@ trait Parsers
         $params = array_keys($operation['parameters']);
         $params = $this->applyFilter('DocMDParams', $params, compact('operation', 'api', 'method'));
         return $params;
+    }
+
+    protected function getMDApiParamDefaults($apiName, $operation, $api, $method)
+    {
+        $defaults = [];
+        $params = $operation['parameters'];
+        foreach($params as $key => $item) {
+            if (isset($item['default'])) {
+                $defaults[$key] = $item['default'];
+            }
+        }
+
+        $params = $this->applyFilter('DocMDParamDefaults', $defaults, compact('operation', 'api', 'method'));
+        return $defaults;
     }
 
 

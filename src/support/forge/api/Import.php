@@ -89,7 +89,6 @@ class Import
             $items = $json['item'];
 
             foreach ($items as $itemIndex => $apiGroup) {
-
                 $apiGroupName = $this->applyFilter('GroupName', $apiGroup['name']);
                 $apiGroupDescription = $this->applyFilter('GroupDescription', $apiGroup['description']);
                 if (empty($docs[$apiGroupName])) {
@@ -100,6 +99,7 @@ class Import
 
                 $apiGroupItems = $apiGroup['item'];
                 foreach ($apiGroupItems as $apiIndex => $api) {
+                    $api = $this->preProcessApi($api);
 
                     $commonParams = compact('api', 'apiIndex',
                         'apiGroupItems', 'apiGroup', 'operations') +
@@ -113,11 +113,17 @@ class Import
                     $commonParams['operation'] = $operation;
 
                     $commonParams['apiName'] = $apiName = $this->readApiName($commonParams);
-                    $operations[$apiName] = $operation;
+                    $skipConfig = $this->deliberateSkips($commonParams);
+                    if (($skipConfig['operation']  ?? true) !== false) {
+                        $operations[$apiName] = $operation;
+                    }
 
-                    $commonParams['apiDocMethod'] = $methods[$apiName] = $this->readPhpDocMethodItem($commonParams);
-                    $docs[$apiGroupName]['items'][$apiName] =$this->readMarkdownItem($commonParams);
-
+                    if (($skipConfig['phpDoc']  ?? ($skipConfig['docs']  ?? true)) !== false) {
+                        $commonParams['phpDocMethod'] = $methods[$apiName] = $this->readPhpDocMethodItem($commonParams);
+                    }
+                    if (($skipConfig['mdDoc']  ?? ($skipConfig['docs']  ?? true)) !== false) {
+                        $docs[$apiGroupName]['items'][$apiName] =$this->readMarkdownItem($commonParams);
+                    }
                 }
             }
 
@@ -136,6 +142,14 @@ class Import
     /**
      * @param array $params
      *
+     * @return array
+     */
+    protected function deliberateSkips($params = []) {
+        return [];
+    }
+    /**
+     * @param array $params
+     *
      * @return mixed|string
      */
     protected function readApiName($params = []) {
@@ -143,16 +157,29 @@ class Import
         /** @var $apiGroup */
         /** @var $operations */
         extract($params);
+        $exists = [];
         $apiName = $this->applyFilter('Name', $this->parseApiName($api), compact('api', 'apiGroup'));
         if (isset($operations[$apiName])) {
-            var_dump("Exists...$apiName");
+            $exists[] = "Exists ... $apiName [{$api['name']}]";
             $apiName = $this->applyFilter('Slug', $this->sluggify($api['name']), compact('api', 'apiGroup'));
-            var_dump('      named...'. $apiName);
+            $exists[] = " Named it to - ";
+            $exists[] = $apiName;
         }
         $apiName = $this->applyFilter('FinalName', $apiName, compact('api', 'apiGroup'));
+        if (!empty($exists) && end($exists) !== $apiName) {
+            $exists[] = ", but again renamed by filter to - $apiName.";
+        }
         if (isset($operations[$apiName])) {
-            var_dump("Still exists...replacing ... $apiName with {$apiName}_new ");
-            $apiName .= '_new';
+            do {
+                if (!empty($exists)) {
+                    $exists[] = " ! still";
+                }
+                $exists[] = " duplicate ! renaming to _{$apiName} [{$api['name']}].";
+                $apiName = '_' . $apiName;
+            } while (isset($operations[$apiName]));
+        }
+        if (!empty($exists)) {
+//            var_dump(implode("", $exists));
         }
         return $apiName;
     }
@@ -166,7 +193,7 @@ class Import
         /** @var $api */
         extract($params);
         $request = $api['request'];
-        $operation = $this->parseOperation($request);
+        $operation = $this->parseOperation($request, $params);
         $operation = $this->applyFilter('Operation', $operation, $params);
         return $operation;
     }
@@ -195,10 +222,10 @@ class Import
         /** @var $apiName */
         /** @var $api */
         /** @var $operation */
-        /** @var $apiDocMethod */
+        /** @var $phpDocMethod */
         extract($params);
 
-        $md = $this->generateDocs($apiName, $operation, $api, $apiDocMethod);
+        $md = $this->generateDocs($apiName, $operation, $api, $phpDocMethod ?? '');
         $md = $this->applyFilter('DocMDItem', $md, $params);
         return $md;
     }
@@ -234,8 +261,16 @@ class Import
      * @return mixed
      */
     protected function readGlobalTitle($params = []) {
-    return $this->applyFilter('Title', $params['name']);
+        return $this->applyFilter('Title', $params['name']);
     }
 
+    /**
+     * @param $api
+     *
+     * @return mixed
+     */
+    protected function preProcessApi($api) {
+        return $api;
+    }
 
 }

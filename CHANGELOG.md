@@ -63,4 +63,11 @@
 ### 0.2.2
 - Redistribute import from JSON into multible extensible functions
 - Cleaner code
-        
+
+### 0.2.3
+- Option to skip an item
+- Option to skip generation of Documentation 
+- Enhancement of filters
+- Option to add parameters default values externally 
+- Documentation shows parameter default values
+- Documentation formatting with inline code style for methods and parameters 

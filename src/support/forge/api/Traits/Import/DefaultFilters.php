@@ -14,7 +14,7 @@ trait DefaultFilters
      */
     public function filterDocMDLayoutTitle($default, $details)
     {
-        $md = ['##' . $details['data']['title']];
+        $md = ['## ' . $details['data']['title']];
         $md[] = "";
         return $md;
     }
@@ -56,11 +56,28 @@ trait DefaultFilters
                 /** @var $method string the function name */
                 /** @var $endpoint */
                 /** @var $parameters */
+                /** @var $defaults */
                 /** @var $description */
                 extract($item);
+
+                $parameters = array_map(function ($item) {
+                    return "`{$item}`";
+                }, $parameters);
+
+                if (!empty($defaults)) {
+                    foreach ($parameters as $index => &$param) {
+                        if (isset($defaults[$param])) {
+                            $param = "{$param} \[default: `{$defaults[$param]}`\]";
+                        }
+                    }
+                }
+
+                $method = "`{$method}`";
+
                 $row = [];
                 $row[] = implode('<br/>', [$method, $endpoint]);
-                $row[] = implode("<br/>", $parameters);
+                $params = implode("<br/>", $parameters) ?: '\[none\]';
+                $row[] = $params;
                 $row[] = $description;
                 $row[] = '';
 

@@ -54,11 +54,15 @@ trait Writers
 
         $json = \GuzzleHttp\json_encode($data, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
 
-        //        $options['skipDocs'] = true;
-        if (empty($options['skipDocs'])) {
-            $pathWihtoutExtension = preg_replace('/\.[^.]+?$/', '', $path);
-            $this->writeMarkdownDocs($options['docsPath'] ?? ($pathWihtoutExtension . '.md'));
-            $this->writePHPDocMethod($options['methodsPath'] ?? ($pathWihtoutExtension . '.php'));
+        // $options['skipDocs'] = true;
+        $pathWihtoutExtension = preg_replace('/\.[^.]+?$/', '', $path);
+
+        if (empty($options['skipPhpDoc'] ?? $options['skipDocs'] ?? false)) {
+            $this->writeMarkdownDocs($options['mdDocPath'] ?? ($pathWihtoutExtension . '.md'));
+        }
+
+        if (empty($options['skipMDDoc'] ?? ($options['skipDocs'] ?? false))) {
+            $this->writePHPDocMethod($options['phpDocPath'] ?? ($pathWihtoutExtension . '.php'));
         }
 
         return file_put_contents($path, $json);
