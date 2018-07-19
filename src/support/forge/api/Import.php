@@ -75,64 +75,58 @@ class Import
     protected function importFromJson($filePath)
     {
 
-        if (!file_exists($filePath) || is_dir($filePath)) {
-            $filePath = realpath($this->rootPath . '/' . $filePath);
-        }
-        if (!file_exists($filePath) || is_dir($filePath)) {
-            $filePath = $this->rootPath . '/' . $filePath;
-        }
-
-        $this->sourceData = $json = \GuzzleHttp\json_decode(file_get_contents($filePath), true);
+        $this->sourceData = $json = $this->readJson($filePath);
         $data = [];
         $docs = [];
         $methods = [];
+        $operations = [];
 
         if (!empty($json)) {
-            $globalInfo = $json['info'];
-            $globalInfoName = $this->applyFilter('Title', $globalInfo['name']);
+
+            $globalInfo = $this->readGlobalInfo($json);
+            $globalTitle = $this->readGlobalTitle($globalInfo);
+
             $items = $json['item'];
 
-            $operations = [];
             foreach ($items as $itemIndex => $apiGroup) {
 
                 $apiGroupName = $this->applyFilter('GroupName', $apiGroup['name']);
                 $apiGroupDescription = $this->applyFilter('GroupDescription', $apiGroup['description']);
                 if (empty($docs[$apiGroupName])) {
                     $docs[$apiGroupName] = ['description' => $apiGroupDescription, 'items' => []];
+                } else {
+                    // group already exists
                 }
 
                 $apiGroupItems = $apiGroup['item'];
                 foreach ($apiGroupItems as $apiIndex => $api) {
-                    $apiName = $this->applyFilter('Name', $this->parseApiName($api), compact('api', 'apiGroup'));
-                    $request = $api['request'];
-                    $operation = $this->applyFilter('Operation', $this->parseOperation($request), compact('api', 'apiGroup'));
-                    if (isset($operations[$apiName])) {
-                        $apiName = $this->applyFilter('Slug', $this->sluggify($api['name']), compact('api', 'apiGroup'));
-                    }
-                    $apiName = $this->applyFilter('FinalName', $apiName, compact('api', 'apiGroup'));
+
+                    $commonParams = compact('api', 'apiIndex',
+                        'apiGroupItems', 'apiGroup', 'operations') +
+                            [
+                                'groupIndex' => $itemIndex,
+                                'info' => $globalInfo,
+                                'allItems' => $items
+                            ];
+
+                    $operation = $this->readOperationItem($commonParams);
+                    $commonParams['operation'] = $operation;
+
+                    $commonParams['apiName'] = $apiName = $this->readApiName($commonParams);
                     $operations[$apiName] = $operation;
 
-                    $methods[$apiName] = $this->applyFilter('DocMethodItem',
-                        $this->generateMethod($apiName, $operation, $api));
-                    $docs[$apiGroupName]['items'][$apiName] = $this->applyFilter('DocMDItem',
-                        $this->generateDocs($apiName, $operation, $api, $methods[$apiName]));
+                    $commonParams['apiDocMethod'] = $methods[$apiName] = $this->readPhpDocMethodItem($commonParams);
+                    $docs[$apiGroupName]['items'][$apiName] =$this->readMarkdownItem($commonParams);
 
                 }
             }
 
             if (!empty($operations)) {
                 $data = compact('operations');
-                $data['models'] = [
-                    'getResponse' => [
-                        'type' => 'object',
-                        'additionalProperties' => [
-                            'location' => 'json',
-                        ],
-                    ],
-                ];
+                $data['models'] = $this->getOperationModels($operations);
             }
 
-            $this->mdDocsData = ['title' => $globalInfoName, 'groups' => $docs];
+            $this->mdDocsData = ['title' => $globalTitle, 'groups' => $docs];
             $this->methodData = $methods;
         }
 
@@ -140,52 +134,108 @@ class Import
     }
 
     /**
-     * @param        $apiName
-     * @param        $operation
-     * @param array  $api
-     * @param string $method string Function Method for PHPDoc
+     * @param array $params
      *
-     * @return array
+     * @return mixed|string
      */
-    protected function generateDocs($apiName, $operation, $api = [], $method = '')
-    {
-
-        $row = [];
-        $row['method'] = $this->getMDApiName($apiName, $operation, $api, $method);
-        $row['endpoint'] = $this->getMDApiEndpoint($apiName, $operation, $api, $method);
-        $row['parameters'] = $this->getMDApiParams($apiName, $operation, $api, $method);
-        $row['description'] = $this->getMDDescription($apiName, $operation, $api, $method);
-
-        return $row;
-
+    protected function readApiName($params = []) {
+        /** @var $api */
+        /** @var $apiGroup */
+        /** @var $operations */
+        extract($params);
+        $apiName = $this->applyFilter('Name', $this->parseApiName($api), compact('api', 'apiGroup'));
+        if (isset($operations[$apiName])) {
+            var_dump("Exists...$apiName");
+            $apiName = $this->applyFilter('Slug', $this->sluggify($api['name']), compact('api', 'apiGroup'));
+            var_dump('      named...'. $apiName);
+        }
+        $apiName = $this->applyFilter('FinalName', $apiName, compact('api', 'apiGroup'));
+        if (isset($operations[$apiName])) {
+            var_dump("Still exists...replacing ... $apiName with {$apiName}_new ");
+            $apiName .= '_new';
+        }
+        return $apiName;
     }
 
     /**
-     * @param       $apiName
-     * @param array $operation
-     * @param array $api
+     * @param array $params
      *
-     * @return string
+     * @return array|mixed
      */
-    protected function generateMethod($apiName, $operation = [], $api = [])
-    {
-
-        $method = [' * @method', 'array'];
-
-        $data = "";
+    protected function readOperationItem($params = []) {
+        /** @var $api */
+        extract($params);
         $request = $api['request'];
-        $description = $this->applyFilter('DocMethodDescription',
-            $this->sanitizeDescription($request['description'], ['noMarkdown' => true, 'shorten' => true]));
-        $params = $this->applyFilter('DocMethodParams', $operation['parameters']);
-        if (!empty($params)) {
-            $data = $this->applyFilter('DocMethodData', 'array $parameters', $params);
-        }
-
-        $method[] = $this->applyFilter('DocMethodSignature', "$apiName($data)", compact('apiName', 'params'));
-        $method[] = $description;
-
-        return implode("\t", $method);
-
+        $operation = $this->parseOperation($request);
+        $operation = $this->applyFilter('Operation', $operation, $params);
+        return $operation;
     }
+
+    /**
+     * @param array $params
+     *
+     * @return mixed|string
+     */
+    protected function readPhpDocMethodItem($params = []) {
+        /** @var $api */
+        /** @var $apiName */
+        /** @var $operation */
+        extract($params);
+        $phpDocMethod = $this->generateMethod($apiName, $operation, $api);
+        $phpDocMethod = $this->applyFilter('DocMethodItem', $phpDocMethod, $params);
+        return $phpDocMethod;
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return array|mixed
+     */
+    protected function readMarkdownItem($params = []) {
+        /** @var $apiName */
+        /** @var $api */
+        /** @var $operation */
+        /** @var $apiDocMethod */
+        extract($params);
+
+        $md = $this->generateDocs($apiName, $operation, $api, $apiDocMethod);
+        $md = $this->applyFilter('DocMDItem', $md, $params);
+        return $md;
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return array
+     */
+    protected function getOperationModels($params = []) {
+        return [
+            'getResponse' => [
+                'type' => 'object',
+                'additionalProperties' => [
+                    'location' => 'json',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return mixed
+     */
+    protected function readGlobalInfo($params = []) {
+        return $params['info'];
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return mixed
+     */
+    protected function readGlobalTitle($params = []) {
+    return $this->applyFilter('Title', $params['name']);
+    }
+
 
 }

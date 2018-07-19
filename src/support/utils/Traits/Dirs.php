@@ -2,10 +2,8 @@
 
 namespace SudiptoChoudhury\Support\Utils\Traits;
 
-
 trait Dirs
 {
-
     /**
      * @return string
      */

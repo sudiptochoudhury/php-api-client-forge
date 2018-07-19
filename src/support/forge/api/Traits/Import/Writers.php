@@ -9,6 +9,26 @@ trait Writers
 {
 
     /**
+     * @param $filePath
+     *
+     * @return mixed
+     */
+    protected function readJson($filePath)
+    {
+
+        if (!file_exists($filePath) || is_dir($filePath)) {
+            $filePath = realpath($this->rootPath . '/' . $filePath);
+        }
+        if (!file_exists($filePath) || is_dir($filePath)) {
+            $filePath = $this->rootPath . '/' . $filePath;
+        }
+
+        $json = \GuzzleHttp\json_decode(file_get_contents($filePath), true);
+
+        return $json;
+    }
+
+    /**
      * @param string $path
      * @param array  $options
      *
@@ -36,9 +56,9 @@ trait Writers
 
         //        $options['skipDocs'] = true;
         if (empty($options['skipDocs'])) {
-            $pathWihtouExtension = preg_replace('/\.[^.]+?$/', '', $path);
-            $this->writeMarkdownDocs($options['docsPath'] ?? ($pathWihtouExtension . '.md'));
-            $this->writePHPDocMethod($options['methodsPath'] ?? ($pathWihtouExtension . '.php'));
+            $pathWihtoutExtension = preg_replace('/\.[^.]+?$/', '', $path);
+            $this->writeMarkdownDocs($options['docsPath'] ?? ($pathWihtoutExtension . '.md'));
+            $this->writePHPDocMethod($options['methodsPath'] ?? ($pathWihtoutExtension . '.php'));
         }
 
         return file_put_contents($path, $json);

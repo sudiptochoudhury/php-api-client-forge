@@ -28,6 +28,56 @@ trait Parsers
 
     }
 
+
+    /**
+     * @param        $apiName
+     * @param        $operation
+     * @param array  $api
+     * @param string $method string Function Method for PHPDoc
+     *
+     * @return array
+     */
+    protected function generateDocs($apiName, $operation, $api = [], $method = '')
+    {
+
+        $row = [];
+        $row['method'] = $this->getMDApiName($apiName, $operation, $api, $method);
+        $row['endpoint'] = $this->getMDApiEndpoint($apiName, $operation, $api, $method);
+        $row['parameters'] = $this->getMDApiParams($apiName, $operation, $api, $method);
+        $row['description'] = $this->getMDDescription($apiName, $operation, $api, $method);
+
+        return $row;
+
+    }
+
+    /**
+     * @param       $apiName
+     * @param array $operation
+     * @param array $api
+     *
+     * @return string
+     */
+    protected function generateMethod($apiName, $operation = [], $api = [])
+    {
+
+        $method = [' * @method', 'array'];
+
+        $data = "";
+        $request = $api['request'];
+        $description = $this->applyFilter('DocMethodDescription',
+            $this->sanitizeDescription($request['description'], ['noMarkdown' => true, 'shorten' => true]));
+        $params = $this->applyFilter('DocMethodParams', $operation['parameters']);
+        if (!empty($params)) {
+            $data = $this->applyFilter('DocMethodData', 'array $parameters', $params);
+        }
+
+        $method[] = $this->applyFilter('DocMethodSignature', "$apiName($data)", compact('apiName', 'params'));
+        $method[] = $description;
+
+        return implode("\t", $method);
+
+    }
+
     /**
      * @param array  $url
      * @param string $bodyRaw
@@ -258,11 +308,12 @@ trait Parsers
     }
 
     /**
+     * @param $apiName
      * @param $operation
      * @param $api
      * @param $method
      *
-     * @return string
+     * @return mixed|string
      */
     protected function getMDApiEndpoint($apiName, $operation, $api, $method)
     {
@@ -278,6 +329,7 @@ trait Parsers
     }
 
     /**
+     * @param $apiName
      * @param $operation
      * @param $api
      * @param $method
@@ -293,8 +345,8 @@ trait Parsers
     }
 
 
-
     /**
+     * @param $apiName
      * @param $operation
      * @param $api
      * @param $method

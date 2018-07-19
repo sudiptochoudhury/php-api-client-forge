@@ -12,5 +12,4 @@ trait AllTraits
     use Writers;
     use Filterable;
     use DefaultFilters;
-
 }

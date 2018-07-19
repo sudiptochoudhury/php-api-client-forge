@@ -17,6 +17,7 @@ trait Getters
     {
         return $this->data;
     }
+
     /**
      * @return array
      */
