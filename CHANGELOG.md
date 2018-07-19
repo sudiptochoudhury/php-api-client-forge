@@ -60,3 +60,7 @@
 ### 0.2.1
 - Add option to override import class in Client class import call 
         
+### 0.2.2
+- Redistribute import from JSON into multible extensible functions
+- Cleaner code
+        
