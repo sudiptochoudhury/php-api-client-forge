@@ -75,7 +75,8 @@
 
 ### 0.2.4
 - Made all function protected expect for `importApi` to prevent conflict with api methods
-- Started with Documentation
+- Documentation
+
 
 ### 0.2.5
-- Documentation
+- Documentation minor update

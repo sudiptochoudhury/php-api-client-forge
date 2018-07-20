@@ -53,8 +53,8 @@ class Api extends ApiForge
             'base_uri' => 'https://api.provider.com/api/v1/',
             'verify' => false,
             'headers' => [
-                'Authorization' => 'Zoho-authtoken {{AuthToken}}',
-                'X-com-zoho-subscriptions-organizationid' => "{{ClientID}}",
+                'Authorization' => 'authtoken {{AuthToken}}',
+                'X-clientID' => "{{ClientID}}",
             ],
         ],
     ];
