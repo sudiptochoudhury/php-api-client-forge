@@ -63,7 +63,7 @@ class Client
      *
      * @return $this
      */
-    public function setOptions($options = [])
+    protected function setOptions($options = [])
     {
         $myProperties = get_class_vars(__CLASS__);
         $myDefaults = $myProperties['DEFAULTS'];
@@ -115,7 +115,7 @@ class Client
      *
      * @return $this
      */
-    public function setDescription($descriptionOptions = [])
+    protected function setDescription($descriptionOptions = [])
     {
 
         $optionsJsonPath = $this->options['description']['jsonPath'];
@@ -158,7 +158,7 @@ class Client
      *
      * @return $this
      */
-    public function createClient($clientOptions = [])
+    protected function createClient($clientOptions = [])
     {
         $this->client = new GHClient($clientOptions);
         return $this;

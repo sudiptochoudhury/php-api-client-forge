@@ -122,7 +122,7 @@ class Import
                         $commonParams['phpDocMethod'] = $methods[$apiName] = $this->readPhpDocMethodItem($commonParams);
                     }
                     if (($skipConfig['mdDoc']  ?? ($skipConfig['docs']  ?? true)) !== false) {
-                        $docs[$apiGroupName]['items'][$apiName] =$this->readMarkdownItem($commonParams);
+                        $docs[$apiGroupName]['items'][$apiName] = $this->readMarkdownItem($commonParams);
                     }
                 }
             }

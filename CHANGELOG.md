@@ -71,3 +71,11 @@
 - Option to add parameters default values externally 
 - Documentation shows parameter default values
 - Documentation formatting with inline code style for methods and parameters 
+
+
+### 0.2.4
+- Made all function protected expect for `importApi` to prevent conflict with api methods
+- Started with Documentation
+
+### 0.2.5
+- Documentation
