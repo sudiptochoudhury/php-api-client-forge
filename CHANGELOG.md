@@ -80,3 +80,6 @@
 
 ### 0.2.5
 - Documentation minor update
+
+### 0.2.6
+- Fix missing default values in MD Documentation

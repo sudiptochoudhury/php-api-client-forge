@@ -66,8 +66,9 @@ trait DefaultFilters
 
                 if (!empty($defaults)) {
                     foreach ($parameters as $index => &$param) {
-                        if (isset($defaults[$param])) {
-                            $param = "{$param} \[default: `{$defaults[$param]}`\]";
+                        $defaultParam = str_replace('`', '', $param);
+                        if (isset($defaults[$defaultParam])) {
+                            $param = "{$param} \[default: `{$defaults[$defaultParam]}`\]";
                         }
                     }
                 }
