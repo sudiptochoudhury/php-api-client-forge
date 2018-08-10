@@ -78,6 +78,15 @@ class Client
         $defaults['description']['jsonPath'] = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
         $mergedOptions = array_replace_recursive($defaults, $options);
         $parsedOptions = $this->parseOptions($mergedOptions, $options);
+
+        $handlers = $this->getStacks($parsedOptions);
+        if (!empty($handlers)) {
+            if (empty($parsedOptions['client'])) {
+                $parsedOptions['client'] = [];
+            }
+            $parsedOptions['client']['handler'] = $handlers;
+        }
+
         $this->options = $parsedOptions;
 
         return $this;
@@ -136,7 +145,7 @@ class Client
                 $description = [];
 
                 if (!empty($jsonPath)) {
-                    $description = json_decode(file_get_contents($jsonPath), true);
+                    $description = \GuzzleHttp\json_decode(file_get_contents($jsonPath), true);
                 }
                 if (empty($description)) {
                     $description = [];
@@ -173,7 +182,6 @@ class Client
      */
     protected function setClient($clientOptions = [])
     {
-
         $this->createClient($clientOptions);
         $this->consumer = new GuzzleClient($this->client, $this->description);
 

@@ -19,7 +19,7 @@ trait Stackables
     protected function getStacks($config)
     {
 
-        $stack = HandlerStack::create();
+        $stack = $config['client']['handler'] ?? HandlerStack::create();
 
         if (!empty($config['settings']['requestHandler'])) {
             $request = $this->getRequestStack($config['settings']['requestHandler']);
