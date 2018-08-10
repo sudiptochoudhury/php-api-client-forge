@@ -84,6 +84,7 @@
 ### 0.2.6
 - Fix missing default values in MD Documentation
 
-### 0.3.0
-- Added Logger handler stack, logger can be through constructor parameters ('settings.log'). Set false to disable logger.  
+### 0.3.0 - Added Logger handler stack, logger can be through constructor parameters ('settings.log'). Set false to disable logger.
 - Added way to add Request and Response Handler functions from constructor paramters ('settings.requestHandler' && 'settings.responseHandler').
+
+### 0.3.1 - Logger Handler fix

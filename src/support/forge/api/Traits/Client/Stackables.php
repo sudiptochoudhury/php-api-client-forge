@@ -46,7 +46,8 @@ trait Stackables
 
         if (!($logger instanceof Logger)) {
             $logger = new Logger($loggerSettings['name'] ?? $this->loggerName ?? 'API');
-            $logger->pushHandler(new RotatingFileHandler($loggerSettings['file'] ?? $this->loggerFile ?? 'webapi-logs.log'));
+            $logger->pushHandler(new RotatingFileHandler($loggerSettings['file'] ??
+                $this->loggerFile ?? (__DIR__. '/webapi-logs.log')));
         }
 
         return Middleware::log($logger, new MessageFormatter($loggerFormat));
