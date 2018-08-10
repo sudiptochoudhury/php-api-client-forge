@@ -106,7 +106,7 @@ class Client
             foreach ($options as $key => $option) {
                 $options[$key] = $this->parseOptions($option, $rootOption);
             }
-        } else {
+        } elseif (is_scalar($options)) {
             if (preg_match('/{{/', $options)) {
                 foreach ($rootOption as $key => $value) {
                     if (is_scalar($value)) {
