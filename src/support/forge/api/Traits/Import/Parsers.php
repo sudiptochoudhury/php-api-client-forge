@@ -111,7 +111,7 @@ trait Parsers
             }
         }
 
-        $rawParams = \GuzzleHttp\json_decode($bodyRaw, true);
+        $rawParams = json_decode($bodyRaw, true);
         if (!empty($rawParams)) {
             foreach ($rawParams as $paramName => $paramItem) {
                 $params[$paramName] = [

@@ -23,7 +23,7 @@ trait Writers
             $filePath = $this->rootPath . '/' . $filePath;
         }
 
-        $json = \GuzzleHttp\json_decode(file_get_contents($filePath), true);
+        $json = json_decode(file_get_contents($filePath), true);
 
         return $json;
     }
@@ -52,7 +52,7 @@ trait Writers
             $this->sourceData];
         $data = $this->applyFilter('APIDefinitionFinalJson', $data, $filterParams);
 
-        $json = \GuzzleHttp\json_encode($data, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
+        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_ERROR_NONE | JSON_UNESCAPED_SLASHES);
 
         // $options['skipDocs'] = true;
         $pathWihtoutExtension = preg_replace('/\.[^.]+?$/', '', $path);

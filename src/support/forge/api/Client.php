@@ -145,7 +145,7 @@ class Client
                 $description = [];
 
                 if (!empty($jsonPath)) {
-                    $description = \GuzzleHttp\json_decode(file_get_contents($jsonPath), true);
+                    $description = json_decode(file_get_contents($jsonPath), true);
                 }
                 if (empty($description)) {
                     $description = [];
