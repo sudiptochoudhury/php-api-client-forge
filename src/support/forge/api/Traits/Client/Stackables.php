@@ -14,8 +14,6 @@ use Monolog\Handler\RotatingFileHandler;
 trait Stackables
 {
 
-    private $loggerFile = 'webapi-logs.log';
-
     protected function getStacks($config)
     {
 
@@ -25,19 +23,21 @@ trait Stackables
             $request = $this->getRequestStack($config['settings']['requestHandler']);
             $stack->push($request);
         }
-        if (is_callable(static::requestHandler)) {
-            $stack->push($this->getRequestStack(static::requestHandler));
+        if (method_exists($this, 'requestHandler')) {
+            $function = [$this, 'requestHandler'];
+            $stack->push($this->getRequestStack($function));
         }
 
         if (!empty($config['settings']['responseHandler'])) {
             $response = $this->getResponseStack($config['settings']['responseHandler']);
             $stack->push($response);
         }
-        if (is_callable(static::responseHandler)) {
-            $stack->push($this->getResponseStack(static::responseHandler));
+        if (method_exists($this, 'responseHandler')) {
+            $function = [$this, 'responseHandler'];
+            $stack->push($this->getResponseStack($function));
         }
 
-        if ($config['log'] !== false) {
+        if ($config['log'] ?? true !== false) {
             $logger = $this->getLoggerStack($config['log'] ?? null);
             $stack->push($logger);
         }
@@ -55,7 +55,7 @@ trait Stackables
         if (!($logger instanceof Logger)) {
             $logger = new Logger($loggerSettings['name'] ?? $this->loggerName ?? 'API');
             $logger->pushHandler(new RotatingFileHandler($loggerSettings['file'] ??
-                $this->loggerFile ?? (__DIR__ . '/webapi-logs.log')));
+                $this->loggerFile ?? ($this->getChildDir() . '/webapi-logs.log')));
         }
 
         return Middleware::log($logger, new MessageFormatter($loggerFormat));
