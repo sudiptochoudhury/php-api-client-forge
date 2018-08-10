@@ -88,3 +88,5 @@
 - Added way to add Request and Response Handler functions from constructor paramters ('settings.requestHandler' && 'settings.responseHandler').
 
 ### 0.3.1 - Logger Handler fix
+
+### 0.3.2 - Response and Request handler can now be defined as a class member
