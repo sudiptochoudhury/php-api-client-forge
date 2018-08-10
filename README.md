@@ -248,7 +248,7 @@ install, even donate and contact. Just tap into the desired layout filters and f
 The table below gives you details of all the filters.
 
 > But before that, you can also do similar things by totally overriding the parent's functions. For example, 
-`readApiName`  can be overridden to extend or replace existing login to detect a function name with your own logic.
+`readApiName`  can be overridden to extend or replace existing logic to detect a function name with your own logic.
 However, filters help in changing things in a granular way. There can be 10 filters applied to a single 
 function you wan to override and you may need to just use one filter out of them instead of writing a big bunch of 
 overriding code. Of course, choice is yours.
@@ -268,7 +268,7 @@ overriding code. Of course, choice is yours.
 | DocMDEndpoint  | Endpoint of API item in Markdown documentation |
 | DocMDDescription  |  Description of API item in Markdown documentation  |
 | DocMDParams  |  Parameters of API Item Markdown documentation |
-| DocMDParamDefaults  | Default values for parameres of API item Markdown documentation |
+| DocMDParamDefaults  | Default values for parameters of API item Markdown documentation |
 | DocMDLayoutTitle  | Markdown documentation title  |
 | DocMDLayoutSubtitle  | Markdown documentation subtitle  |
 | DocMDLayoutHeader  |  Markdown documentation header |

@@ -6,6 +6,7 @@ use GuzzleHttp\Client as GHClient;
 use GuzzleHttp\Command\Guzzle\Description;
 use GuzzleHttp\Command\Guzzle\GuzzleClient;
 use SudiptoChoudhury\Support\Forge\Api\Traits\Client\Importable;
+use SudiptoChoudhury\support\forge\api\Traits\Client\Stackables;
 use SudiptoChoudhury\Support\Utils\Traits\Dirs;
 
 /**
@@ -17,6 +18,7 @@ class Client
 {
     use Dirs;
     use Importable;
+    use Stackables;
 
     protected $DEFAULT_API_JSON_PATH = './config/api.json';
 
