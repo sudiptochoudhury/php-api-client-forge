@@ -77,7 +77,7 @@ class Client
 
         $defaults['description']['jsonPath'] = realpath($this->rootPath . $this->DEFAULT_API_JSON_PATH);
         $mergedOptions = array_replace_recursive($defaults, $options);
-        $parsedOptions = $this->parseOptions($mergedOptions, $options);
+        $parsedOptions = $this->parseOptions($mergedOptions, $mergedOptions);
 
         $handlers = $this->getStacks($parsedOptions);
         if (!empty($handlers)) {

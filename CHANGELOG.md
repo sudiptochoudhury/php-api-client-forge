@@ -96,3 +96,5 @@
 ### 0.3.4 - Fix incorrect json_decoder and encoder
 
 ### 0.3.5 - Fix issue with parsing non scalar options  
+
+### 0.3.6 - Fix issue with parsing 
