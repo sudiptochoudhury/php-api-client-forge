@@ -19,22 +19,23 @@ trait Stackables
 
         $stack = $config['client']['handler'] ?? HandlerStack::create();
 
+        if (method_exists($this, 'requestHandler')) {
+            $function = [$this, 'requestHandler'];
+            $stack->push($this->getRequestStack($function));
+        }
         if (!empty($config['settings']['requestHandler'])) {
             $request = $this->getRequestStack($config['settings']['requestHandler']);
             $stack->push($request);
         }
-        if (method_exists($this, 'requestHandler')) {
-            $function = [$this, 'requestHandler'];
-            $stack->push($this->getRequestStack($function));
+
+        if (method_exists($this, 'responseHandler')) {
+            $function = [$this, 'responseHandler'];
+            $stack->push($this->getResponseStack($function));
         }
 
         if (!empty($config['settings']['responseHandler'])) {
             $response = $this->getResponseStack($config['settings']['responseHandler']);
             $stack->push($response);
-        }
-        if (method_exists($this, 'responseHandler')) {
-            $function = [$this, 'responseHandler'];
-            $stack->push($this->getResponseStack($function));
         }
 
         if ($config['log'] ?? true !== false) {
