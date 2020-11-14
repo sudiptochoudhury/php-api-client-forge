@@ -1,7 +1,7 @@
 <?php
 
 
-namespace SudiptoChoudhury\support\forge\api\Traits\Client;
+namespace SudiptoChoudhury\Support\Forge\Api\Traits\Client;
 
 use GuzzleHttp\MessageFormatter;
 use Monolog\Logger;

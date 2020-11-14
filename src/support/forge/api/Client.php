@@ -6,7 +6,7 @@ use GuzzleHttp\Client as GHClient;
 use GuzzleHttp\Command\Guzzle\Description;
 use GuzzleHttp\Command\Guzzle\GuzzleClient;
 use SudiptoChoudhury\Support\Forge\Api\Traits\Client\Importable;
-use SudiptoChoudhury\support\forge\api\Traits\Client\Stackables;
+use SudiptoChoudhury\support\Forge\Api\Traits\Client\Stackables;
 use SudiptoChoudhury\Support\Utils\Traits\Dirs;
 
 /**
