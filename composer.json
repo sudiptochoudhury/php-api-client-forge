@@ -26,7 +26,8 @@
     },
     "autoload": {
         "psr-4": {
-            "SudiptoChoudhury\\": "src/"
+            "SudiptoChoudhury\\Support\\Forge\\Api\\": "src/support/forge/api/",
+            "SudiptoChoudhury\\Support\\Utils\\": "src/support/utils/"
         }
     },
     "autoload-dev": {
